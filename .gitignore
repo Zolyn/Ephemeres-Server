@@ -1,6 +1,3 @@
-# config
-src/core/config.ts
-
 # compiled output
 /dist
 /node_modules
