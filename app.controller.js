@@ -15,42 +15,28 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.AppController = void 0;
 const common_1 = require("@nestjs/common");
 const app_service_1 = require("./app.service");
-const upyun_service_1 = require("./services/upyun/upyun.service");
+const services_1 = require("./services");
 let AppController = class AppController {
-    constructor(cacheManager, appService, upyunService) {
-        this.cacheManager = cacheManager;
+    constructor(appService, upyunService) {
         this.appService = appService;
         this.upyunService = upyunService;
     }
-    async getFileList(realIP) {
-        const cache = await this.cacheManager.get(realIP);
-        if (cache) {
-            console.log(`Sending cache for ${realIP}`);
-            return cache;
-        }
-        const config = await this.appService.readConfig();
-        let result;
-        switch (config.storage) {
-            case 'upyun': {
-                const mergedStorageConfig = this.upyunService.mergeStorageConfig(config.storageConfig);
-                result = await this.upyunService.retriveUpyunFileList(mergedStorageConfig, config.fullRetrieve);
-            }
-        }
-        return await this.cacheManager.set(realIP, result, { ttl: 60 });
+    async upyun(ip, xRealIP) {
+        return await this.appService.tryGetCache(xRealIP !== null && xRealIP !== void 0 ? xRealIP : ip, this.upyunService, await this.appService.getProviderConfig('upyun'));
     }
 };
 __decorate([
-    (0, common_1.Get)(),
-    __param(0, (0, common_1.Headers)('x-real-ip')),
+    (0, common_1.Get)('upyun'),
+    __param(0, (0, common_1.Ip)()),
+    __param(1, (0, common_1.Headers)('x-real-ip')),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String]),
+    __metadata("design:paramtypes", [String, String]),
     __metadata("design:returntype", Promise)
-], AppController.prototype, "getFileList", null);
+], AppController.prototype, "upyun", null);
 AppController = __decorate([
     (0, common_1.Controller)(),
-    __param(0, (0, common_1.Inject)(common_1.CACHE_MANAGER)),
-    __metadata("design:paramtypes", [Object, app_service_1.AppService,
-        upyun_service_1.UpyunService])
+    __metadata("design:paramtypes", [app_service_1.AppService,
+        services_1.UpyunService])
 ], AppController);
 exports.AppController = AppController;
 //# sourceMappingURL=app.controller.js.map

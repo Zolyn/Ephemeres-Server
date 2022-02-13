@@ -12,27 +12,18 @@ const upyun = require("upyun");
 const path_1 = require("path");
 const utils_1 = require("../../core/utils");
 let UpyunService = class UpyunService {
-    mergeStorageConfig(config) {
+    async main({ providerConfig, fullRetrieve, }) {
+        return await this.retrieveUpyunFileList(this.mergeProviderConfig(providerConfig), fullRetrieve);
+    }
+    mergeProviderConfig(config) {
         const envs = {
             service: process.env.UPYUN_SERVICE,
             operator: process.env.UPYUN_OPERATOR,
             password: process.env.UPYUN_PASSWORD,
         };
-        const mergedConfig = {};
-        Object.keys(envs).map((key) => {
-            var _a;
-            let mergedValue = envs[key];
-            if (config) {
-                mergedValue = (_a = envs[key]) !== null && _a !== void 0 ? _a : config[key];
-            }
-            if (!mergedValue) {
-                throw new common_1.InternalServerErrorException(`Missing config prop: ${key}`);
-            }
-            mergedConfig[key] = mergedValue;
-        });
-        return mergedConfig;
+        return (0, utils_1.mergeConfigAndEnv)('upyunService', config, envs);
     }
-    async retriveUpyunFileList(config, fullRetrieve) {
+    async retrieveUpyunFileList(config, fullRetrieve) {
         const { service, operator, password } = config;
         const instance = new upyun.Service(service, operator, password);
         const client = new upyun.Client(instance);
@@ -47,14 +38,9 @@ let UpyunService = class UpyunService {
                 throw new common_1.InternalServerErrorException(err);
             }
             for (const { type: fileIdentifier, name, time, size, } of currentFiles.files) {
-                const { type, icon } = (0, utils_1.getFileTypeAndIcon)(name);
                 const fileMeta = {
                     isDir: false,
                     pathname: name,
-                    transformedTime: (0, utils_1.transformTime)(time),
-                    transformedSize: (0, utils_1.transformBytes)(size),
-                    type,
-                    icon,
                     time,
                     size,
                 };
@@ -62,8 +48,6 @@ let UpyunService = class UpyunService {
                     const fullPath = (0, path_1.join)(path, name);
                     await getDirectoryMap(fullPath);
                     fileMeta.isDir = true;
-                    fileMeta.icon = 'folder';
-                    fileMeta.type = 'folder';
                 }
                 fileMetaList.push(fileMeta);
             }

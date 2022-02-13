@@ -1,7 +1,8 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.deepMerge = exports.getFileTypeAndIcon = exports.transformBytes = exports.transformTime = exports.defineConfig = exports.awaitHelper = void 0;
+exports.mergeConfigAndEnv = exports.deepMerge = exports.getFileTypeAndIcon = exports.transformBytes = exports.transformTime = exports.defineConfig = exports.awaitHelper = void 0;
 const path_1 = require("path");
+const common_1 = require("@nestjs/common");
 function defineConfig(config) {
     return config;
 }
@@ -154,4 +155,20 @@ function deepMerge(target, merge) {
     return mergedObject;
 }
 exports.deepMerge = deepMerge;
+function mergeConfigAndEnv(identity, config, envs) {
+    const mergedConfig = {};
+    Object.keys(envs).map((key) => {
+        var _a;
+        let mergedVal = envs[key];
+        if (config) {
+            mergedVal = (_a = envs[key]) !== null && _a !== void 0 ? _a : config[key];
+        }
+        if (mergedVal === undefined) {
+            throw new common_1.InternalServerErrorException(`[${identity}]: Missing or improper value for prop: ${key}`);
+        }
+        mergedConfig[key] = mergedVal;
+    });
+    return mergedConfig;
+}
+exports.mergeConfigAndEnv = mergeConfigAndEnv;
 //# sourceMappingURL=index.js.map
